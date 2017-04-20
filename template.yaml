@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: s2i-scala-liquibase
+metadata:
+  name: s2i-scala-liquibase
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: s2i-scala-liquibase
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: scala-liquibase:latest
+    source:
+      git:
+        uri: https://github.com/OutThereLabs/s2i-scala-liquibase.git
+    strategy:
+      type: Docker
+    triggers:
+    - imageChange:
+        from:
+          kind: ImageStreamTag
+          name: scala:latest
+      type: ImageChange
+    - github:
+        secret: "${GITHUB_WEBHOOK_SECRET}"
+      type: GitHub
+    - generic:
+        secret: "${GENERIC_WEBHOOK_SECRET}"
+      type: Generic
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: scala-liquibase
+parameters:
+  - name: "GITHUB_WEBHOOK_SECRET"
+    displayName: "GitHub Webhook Secret"
+    description: "A secret string used to configure the GitHub webhook."
+    generate: "expression"
+    from: "[a-zA-Z0-9]{40}"
+  - name: "GENERIC_WEBHOOK_SECRET"
+    displayName: "GitHub Webhook Secret"
+    description: "A secret string used to configure the GitHub webhook."
+    generate: "expression"
+    from: "[a-zA-Z0-9]{40}"

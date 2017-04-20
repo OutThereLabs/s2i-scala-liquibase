@@ -1,0 +1,58 @@
+#!/bin/bash -e
+#
+# S2I liquibase_update script for the 's2i-scala-liquibase' image.
+# The liquibase_update script executes the migrations defined by your application.
+#
+# For more information see the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
+
+# You can set LIQUIBASE_COMMAND env var, or pass args to the script, or by default it will return status.
+if [ -z "${LIQUIBASE_COMMAND}" ]; then
+    if [ -z "$1" ]; then
+        LIQUIBASE_COMMAND="status"
+    else
+        LIQUIBASE_COMMAND=$@
+    fi
+fi
+
+if [ -z "${LIQUIBASE_CHANGELOG_DIR}" ]; then
+    LIQUIBASE_CHANGELOG_DIR="."
+fi
+
+if [ -z "${DATABASE_TYPE}" ]; then
+    DATABASE_TYPE="postgresql"
+fi
+
+if [ -z "${DATABASE_DRIVER}" ]; then
+    DATABASE_DRIVER="org.postgresql.Driver"
+fi
+
+if [ -z "${DATABASE_HOST}" ]; then
+    DATABASE_HOST="localhost"
+fi
+
+if [ -z "${DATABASE_PORT}" ]; then
+    DATABASE_PORT="5432"
+fi
+
+if [ -z "${DATABASE_USER}" ]; then
+    DATABASE_USER="root"
+fi
+
+if [ -z "${DATABASE_PASSWORD}" ]; then
+    DATABASE_PASSWORD=""
+fi
+
+if [ -z "${DATABASE_NAME}" ]; then
+    echo "DATABASE_NAME must be provided"
+    exit 1
+fi
+
+exec liquibase \
+     --driver=${DATABASE_DRIVER} \
+     --changeLogFile=${LIQUIBASE_CHANGELOG_DIR}/changelog.xml \
+     --url="jdbc:${DATABASE_TYPE}://$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME" \
+     --username="${DATABASE_USER}" \
+     --password=${DATABASE_PASSWORD} \
+     $LIQUIBASE_COMMAND
